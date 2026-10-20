@@ -24,29 +24,43 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
       - name: Installer Android
         uses: android-actions/setup-android@v3
 
-      - name: Verifier les fichiers
-        run: |
-          echo "Verification du projet Nontina"
-          ls -la
+      - name: Accepter les licences Android
+        run: yes | sdkmanager --licenses
 
-      - name: Creer APK
+      - name: Installer les composants Android
+        run: |
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Donner les permissions Gradle
         run: |
           if [ -f gradlew ]; then
             chmod +x gradlew
-            ./gradlew assembleDebug
+          fi
+
+      - name: Compiler APK debug
+        run: |
+          if [ -f gradlew ]; then
+            ./gradlew assembleDebug --stacktrace
           else
-            echo "ERREUR : le fichier gradlew est absent."
+            echo "ERREUR : le fichier gradlew est introuvable."
+            echo "Le projet Android Gradle est peut-etre incomplet."
             exit 1
           fi
 
+      - name: Verifier le fichier APK
+        run: |
+          find . -type f -name "*.apk" -print
+
       - name: Publier APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: Nontina-APK
-          path: app/build/outputs/apk/debug/*.apk
+          path: |
+            **/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+          retention-days: 14
