@@ -1,0 +1,49 @@
+
+name: Build Nontina APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Recuperer le projet
+        uses: actions/checkout@v4
+
+      - name: Installer Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Installer Android
+        uses: android-actions/setup-android@v3
+
+      - name: Verifier les fichiers
+        run: |
+          echo "Verification du projet Nontina"
+          ls -la
+
+      - name: Creer APK si projet Android present
+        run: |
+          if [ -f gradlew ]; then
+            chmod +x gradlew
+            ./gradlew assembleDebug
+          else
+            echo "Le projet Android avec gradlew est absent."
+            exit 1
+          fi
+
+      - name: Publier APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nontina-APK
+          path: app/build/outputs/apk/debug/*.apk
+concurrency:
+  
