@@ -7,6 +7,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: build-nontina-apk
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,13 +33,13 @@ jobs:
           echo "Verification du projet Nontina"
           ls -la
 
-      - name: Creer APK si projet Android present
+      - name: Creer APK
         run: |
           if [ -f gradlew ]; then
             chmod +x gradlew
             ./gradlew assembleDebug
           else
-            echo "Le projet Android avec gradlew est absent."
+            echo "ERREUR : le fichier gradlew est absent."
             exit 1
           fi
 
@@ -45,5 +49,4 @@ jobs:
         with:
           name: Nontina-APK
           path: app/build/outputs/apk/debug/*.apk
-concurrency:
-  
+          if-no-files-found: error
